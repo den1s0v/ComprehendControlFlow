@@ -23,7 +23,7 @@ from trace_gen.dict_helpers import get_ith_expr_value, find_by_keyval_in
 
 def process_algorithm_and_trace_from_json(alg_tr: dict):
     """
-    Demonstration entry point
+    Demonstration entry point.
     :param alg_tr: a dict with at least keys "trace", "algorithm"
     :return: feedback{"messages": [...], "mistakes": [...]}
     """
@@ -81,7 +81,7 @@ def process_algorithm_and_trace_from_json(alg_tr: dict):
 def make_act_json(algorithm_json, algorithm_element_id: int, act_type: str, existing_trace_json,
                   user_language=None) -> list:
     """
-    act_type: 'started' or 'finished' for complex, 'performed' for simple statements
+    `act_type`: 'started' or 'finished' for complex, 'performed' for simple statements.
     Returns full supplemented trace: list of dicts, each dict represents act object.
     (Returns string with error description if an exception occurred)
     """
@@ -168,8 +168,8 @@ def make_act_json(algorithm_json, algorithm_element_id: int, act_type: str, exis
 
 
 def add_styling_to_trace(algorithm_json, trace_json, user_language=None, comment_style=None, add_tags=False) -> list:
-    """Adds text line, tags and html form for each act in given trace and returns the same reference to the trace list
-    comment_style: {None | 'use' | 'highlight'}
+    """Adds text line, tags and html form for each act in given trace and returns the same reference to the trace list.
+    `comment_style`: {None | 'use' | 'highlight'}
     """
     try:
         assert isinstance(trace_json, (list, tuple)), "The trace was not correctly constructed: " + str(trace_json)
@@ -183,8 +183,7 @@ def add_styling_to_trace(algorithm_json, trace_json, user_language=None, comment
             assert elem, f"No element with id={algorithm_element_id} in given algorithm."
 
             if elem['id'] == algorithm_json["entry_point"]['id']:
-                # создать строку типа "program began"
-                # act_text = act_line_for_alg_element(algorithm_json, phase='started', lang=user_language, )  # передаём сам корень
+                # to make "program began" line: pass the root
                 elem = algorithm_json
 
             act_text = act_line_for_alg_element(

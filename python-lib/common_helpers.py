@@ -5,20 +5,21 @@ from timeit import default_timer as timer
 
 
 class jsObj(dict):
-    """JS-object-like dict (access to "foo": obj.foo as well as obj["foo"])
+    """JS-object-like dict (access to `foo`: `obj.foo` as well as `obj["foo"]`).
     See also: `adict` library on PyPI
     """
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
 
-# >>> d = jsObj()
-# >>> d.ax = '123'
-# >>> d
-    # {'ax': '123'}
+    # Example:
+    # >>> d = jsObj()
+    # >>> d.ax = '123'
+    # >>> d
+        # {'ax': '123'}
 
 
 class Checkpointer():  # dict
-    'Measures time between hits. Requires the `from timeit import default_timer as timer`'
+    """Measures time between hits. Requires the `from timeit import default_timer as timer` import."""
     def __init__(self, start=True):
         super().__init__()
         self.first = timer()
@@ -48,5 +49,7 @@ class Checkpointer():  # dict
 __CAMELCASE_RE = re.compile(r"([a-z])([A-Z])")
 
 def camelcase_to_snakecase(s: str, sep='_') -> str:
+    """Reformat `LongCamelCaseWords` to better-looking `long_snake_case_words`
+    inserting underscore as default separator """
     return __CAMELCASE_RE.sub(lambda m: f"{m.group(1)}{sep}{m.group(2)}", s).lower()
 

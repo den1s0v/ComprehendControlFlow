@@ -21,7 +21,7 @@ onto_path.append(".")
 
 ONTOLOGY_IRI = 'http://vstu.ru/poas/code'
 
-# options to not to save the parts of ontology while doing reasoning
+# options to not save the parts of ontology while doing reasoning
 WRITE_INVOLVES_CONCEPT = False
 WRITE_PRINCIPAL_VIOLATION = False
 WRITE_SKOS_CONCEPT = False
@@ -29,7 +29,7 @@ WRITE_CONCEPT_FLAG_LABEL = False
 
 
 def prepare_name(s):
-    """Transliterate given word is needed"""
+    """Transliterate given word (to latin chars) if needed"""
     return slugify(s, "ru") or s
 
 
@@ -113,6 +113,7 @@ class TraceTester():
                 break
 
     def newID(self, what=None):
+        """Increment and return new unused integer ID"""
         while True:
             self._maxID += 1
             if self._maxID not in self.id2obj:
@@ -120,6 +121,7 @@ class TraceTester():
         return self._maxID
 
     def alg_entry(self):
+        """Get entry point of algorithm"""
         if "entry_point" in self.data["algorithm"]:
             alg_node = self.data["algorithm"]["entry_point"]
         else:
@@ -127,6 +129,9 @@ class TraceTester():
         return alg_node
 
     def make_correct_trace(self, noop=False):
+        """Fill `self.data["correct_trace"]` with correct sequence of acts
+        taking care of control-condition values.
+        This repeats ordinary logic of each control-structure in the algorithm."""
 
         self.data["correct_trace"] = []
         self.expr_id2values = {}
@@ -483,6 +488,7 @@ class TraceTester():
 
 
     def prepare_id2obj(self):
+        """Fill `self.id2obj` with direct references to algorithm objects """
         alg_objects = list(find_by_type(self.data["algorithm"]))
         if not self.id2obj:
             # fill it once
@@ -611,9 +617,7 @@ class TraceTester():
                                     onto[subiri].is_a.append(onto.last_item)
 
     def prepare_act_candidates(self, onto):
-        """Create all possible acts for each statement.
-        Maximum executon number will be exceeded by `extra_act_entries`.
-        /* Resulting set of acts of size N will be repeated N times, each act to be possibly placed at each index of the trace, covering the set of all possible traces. */ """
+        """Create all required acts for each statement. """
 
         alg_id2max_exec_n = {st_id: 0 for st_id in self.id2obj.keys()}  # executed stmt id to max exec_time of the act
         for act in self.data["correct_trace"]:
@@ -808,7 +812,7 @@ class TraceTester():
 
 
 def make_trace_for_algorithm(alg_dict):
-    """just a wrapper for TraceTester.make_correct_trace() method"""
+    """just a wrapper for `TraceTester.make_correct_trace()` method"""
     try:
         trace_data = {
             "algorithm": alg_dict,
@@ -834,6 +838,7 @@ def make_trace_for_algorithm(alg_dict):
 
 
 def init_persistent_structure(onto):
+    """Fill ontology with static definitions (RDF/OWL classes and properties)"""
     skos = onto.get_namespace("http://www.w3.org/2004/02/skos/core#")
 
     with onto:
@@ -1540,7 +1545,7 @@ def init_persistent_structure(onto):
 
 def extact_mistakes(onto, as_objects=False, group_by=("text_line",), filter_by_level=False) -> dict:
     """Searches for instances of trace_error class and constructs a dict of the following form:
-        "<error_instance1_name>": {
+        `"<error_instance1_name>": {
             "classes": ["list", "of", "class", "names", ...],
             "explanations": ["list", "of", "messages", ...],
             "<property1_name>": ["list", "of", "property", "values", ...],
@@ -1548,7 +1553,7 @@ def extact_mistakes(onto, as_objects=False, group_by=("text_line",), filter_by_l
             ...
         },
         "<error_instance2_name>": {},
-        ...
+        ...`
 
      """
     error_classes = onto.Erroneous.descendants()  # a set of the descendant Classes (including self)
@@ -1619,6 +1624,8 @@ def extact_mistakes(onto, as_objects=False, group_by=("text_line",), filter_by_l
 
 
 def create_ontology_tbox() -> "ontology":
+    """Create a new ontology that does not overlap ony other Owlready2 ontology
+    and fill it with static definitions"""
     # create an ontology
     onto = get_isolated_ontology(ONTOLOGY_IRI)
     clear_ontology(onto, keep_tbox=False)
@@ -1627,8 +1634,6 @@ def create_ontology_tbox() -> "ontology":
         # fill ontology wit static definitions
         init_persistent_structure(onto)
     return onto
-
-
 
 
 def process_algtraces(trace_data_list, debug_rdf_fpath=None, verbose=1,
@@ -1698,6 +1703,8 @@ def process_algtraces(trace_data_list, debug_rdf_fpath=None, verbose=1,
 
 
 def clear_ontology(onto, keep_tbox=False):
+    """Remove all concrete data from the ontology, keeping static definitions if required
+    (removing everything by default)"""
     if not keep_tbox:
         for cls in onto.classes():
             destroy_entity(cls)
@@ -1722,6 +1729,7 @@ def find_by_type(dict_or_list, types=(dict,), _not_entry=None):
 
 
 def save_schema(file_path='jena/control-flow-statements-domain-schema.rdf'):
+    """Save ontology data (static definitions only) as RDF file"""
     global WRITE_INVOLVES_CONCEPT
     global WRITE_PRINCIPAL_VIOLATION
     global WRITE_CONCEPT_FLAG_LABEL

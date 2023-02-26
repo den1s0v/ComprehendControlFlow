@@ -1,5 +1,7 @@
 # explanations.py
 
+"""Format localized explanations for erroneous acts found classified as such by reasoner"""
+
 from collections import defaultdict
 from configparser import ConfigParser, Interpolation
 from pathlib import Path
@@ -26,6 +28,9 @@ LOCALE_KEY_RE = re.compile("!{locale:(.+?)}")
 
 
 class LocalizationProvider:
+    """Java Spring-like translations provider that loads compatible .properties files with localizations
+    (interpolation is not supported)"""
+
     def __init__(self, prop_file_paths=()):
         self.loc2path = dict(prop_file_paths)
         self.loaded = {}
@@ -49,24 +54,29 @@ locale = LocalizationProvider(PROPERTIES_LOCALIZATION_FILES)
 
 
 def tr(key: str, lang: str = None, default=None):
+    """Get translation for current locale"""
     return locale.get(key, lang or get_target_lang(), default)
 
 
 def get_executes(act, *_):
+    """Follow two relations: `act` -> `executes` -> `boundary_of` -> a `statement` and return the `statement`."""
     onto = act.namespace
     boundary = get_relation_object(act, onto.executes)
     return get_relation_object(boundary, onto.boundary_of)
 
 
 def get_base_classes(classes) -> set:
+    """Find subset of given `classes` that have no ancestors"""
     return {sup for cl in classes for sup in cl.is_a}
 
 
 def get_leaf_classes(classes) -> set:
+    """Find subset of given `classes` that have no children"""
     return set(classes) - get_base_classes(classes)
 
 
 def class_name_to_readable(s):
+    """Convert CamelCase words to hyphen-separated capitalized collocations."""
     sep = " "
     res = s.replace("-", sep)
     if res == s:
@@ -109,12 +119,13 @@ def format_explanation(current_onto, act_instance, _auto_register=True) -> list:
     return result
 
 def capitalize_first_letter(s: str) -> str:
+    """Bring first letter (skipping leading spaces and punctuation) to upper case"""
     # replace first letter ever if 's' starts with quote ('"')
     return re.subn(r'\w', lambda m:m[0].upper(), s, count=1)[0]  # take [0] from (str, count_replaced)
 
 
 def format_by_spec(format_str: str, **params: dict):
-    "Simple replace & add closing dot if needed"
+    """Simple replace with `str.format` & add closing dot if needed"""
     format_str = format_str.format(**params)
 
     if not format_str.endswith('.') and not format_str.endswith('?'):
@@ -190,7 +201,9 @@ def named_fields_param_provider(a: 'act_instance', **options):
 
     return placeholders
 
+
 def replaceLocaleMarks(s, lang):
+    """Replace all "!{locale:SOMEKEY}" fragments with result of passing 'SOMEKEY' into `tr` for given language """
     replace_lambda = lambda m: tr(m[1], lang, m[1])
     return LOCALE_KEY_RE.sub(replace_lambda, s)
 

@@ -1,20 +1,20 @@
 # styling.py
-"""Format algorithm & trace textual representation as colored HTML
+"""Format algorithm & trace textual representation as colored HTML.
 
 A piece of HTML is a plain string or dict (the same as JS object) (see below).
 
 The basic structure of HTML tag as Python dict:
-{
+`{
     "tag": "span",
     "attributes": {"class": ["variable", "more", "classes"], "act_type": ["performed"]},
     "content": "plain text or list of another HTML-tag-like dicts"
-}
+}`
 
 The resulting HTML should be something like this:
 
-<span class="variable more classes" act_type="performed">
+`<span class="variable more classes" act_type="performed">
     plain text or list of another HTML-tag-like dicts
-</span>
+</span>`
 
 
 See also: `to_html()` function below for how to convert html_tags to HTML string.
@@ -31,10 +31,10 @@ import re
 
 def make_lexer():
     """create and return lexer function
-    that recieves a string with tokens
+    that receives a string with tokens
     and returns a 2-tuple:
-        0) count of chars consumed by token
-        1) type of token found or None
+        0) count of chars consumed by token;
+        1) type of token found or None.
     """
     keyword_re = re.compile(r"(?:начался|началась|началось|began|закончился|закончилась|закончилось|ended|выполнился|выполнилась|выполнилось|executed|evaluated|calculated|если|иначе|делать|пока|для|от|до|шаг|с\s+шагом|if|else|do|while|for|from|to|with\s+step|step|каждого|в|из|по|к|foreach|each|in|break|continue|return)(?=\s|\b|$)", re.I)
 
@@ -72,20 +72,25 @@ def make_lexer():
 
 _lexer = make_lexer()
 
+
 def parse_line(line: str) -> '[(token, style), ...]':
+    """For each token in given text `line` return token itself and CSS class that provides
+     coloring for that token (keyword, identifier, literal, etc.)
+    """
     tokens = []
-    while(line):
+    while line:
         L, style = _lexer(line)
-        tok = line[:L]  # .strip()
+        tok = line[:L]
         if not style and tokens and (not tokens[-1][1]):
             tokens[-1] = (tokens[-1][0] + tok, style)
         else:
             tokens.append((tok, style))
-        line = line[L:] # .lstrip()
+        line = line[L:]
     return tokens
 
 
-def prepare_tag_for_word(word, style=None) -> str:
+def prepare_tag_for_word(word, style=None) -> 'dict or str':
+    """Return a html tag node wrapping given `word` in a `<span>` tag with `style` CSS class attached. """
     if style:
         return {
             "tag": "span",
@@ -96,6 +101,9 @@ def prepare_tag_for_word(word, style=None) -> str:
 
 
 def prepare_tags_for_line(line: str) -> list:
+    """Convert a `line` of plain indented text to html tags preserving indents (as `&nbsp;`)
+    and coloring each word (keyword, identifier, literal, etc.)
+    """
     elements = []
     leading_spaces = len(line) - len(line.lstrip())
     if leading_spaces > 0:
@@ -105,6 +113,9 @@ def prepare_tags_for_line(line: str) -> list:
 
 
 def prepare_tags_for_text(multiline_text) -> dict:
+    """Convert plain multiline indented text to html tags preserving line breaks (as `<br>`) and indents (as `&nbsp;`).
+    Each line is passed through `prepare_tags_for_line` as well.
+    """
     html = {'tag': "div", "content": []}
     lines = multiline_text.splitlines()
     for line in lines:
@@ -118,6 +129,8 @@ def prepare_tags_for_text(multiline_text) -> dict:
 
 
 def to_html(element: str or dict or list, sep='') -> str:
+    """Serialize `element` (prepared tags) as html string.
+    If `element` is a list, then `sep` would be inserted between its elements (empty by default)."""
     if not element:
         return ''
 
@@ -148,8 +161,8 @@ def to_html(element: str or dict or list, sep='') -> str:
     return 'UNKNOWN(%s)' % type(element).__name__
 
 
-# duplicate of dict_helpers.find_by_key_in(), for access convenience
 def find_by_key_in(key, dict_or_list, _not_entry=None):
+    """duplicate of `trace_gen.dict_helpers.find_by_key_in`, for access convenience"""
     _not_entry = _not_entry or set()
     _not_entry.add(id(dict_or_list))
     if isinstance(dict_or_list, dict):

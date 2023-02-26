@@ -25,9 +25,9 @@ _service_Process = None
 _client_Manager = None
 
 
-
-
 def invoke_jena_reasoning_service(rdfData: bytes, rules_path=JENA_RULE_PATHS):
+	"""Start service process (`jena/Jena.jar`) if not running yet and
+	perform `runReasoner` on it with given `rdfData`"""
 	# java -jar Jena.jar jena "test_data/test_make_trace_output.rdf" "jena/all.rules" "test_data/jena_output.rdf"
 
 	global _service_Process, _client_Manager
@@ -71,6 +71,7 @@ def invoke_jena_reasoning_service(rdfData: bytes, rules_path=JENA_RULE_PATHS):
 
 
 def stop_jena_reasoning_service():
+	"""Stop service process (`jena/Jena.jar`) if it is running"""
 	global _service_Process
 	if _service_Process and _service_Process.is_running():
 		if _client_Manager:

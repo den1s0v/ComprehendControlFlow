@@ -1954,73 +1954,6 @@ _trace_node_map = [
 ]
 
 
-
-test_str = """
-{
-"algorithm": [
-        {"for":"var_i", "from": "2", "to":"15", "step":"+1",
-            "init_act": "var_i значением 2",
-            "cond_act": "i не достигло 16",
-            "update_act": "прибавить 1 к i",  "name":"my-for-3", "body": [
-                "for_body_action_3"
-            ]
-        }
-]}
-"""
-test_str = """
-{
-"algorithm": [
-    {"func":"main", "is_entry":"0", "param_list":[], "body": [
-            "бежать",
-            "break"
-        ]
-    },
-    {"alternative":"my-alt-1", "branches": [
-            {"if": "цвет==зелёный", "then": [
-                "бежать",
-                "стоп"
-            ]},
-            {"else if": "цвет==желтый", "then": [
-                "лежать"
-            ]},
-            {"else": [
-                "ждать"
-            ]}
-        ]
-    },
-    {"while":"while-cond-1", "name":"my-while-1", "body": [
-            "повернуть",
-            {"do while":"dowhile-cond-2", "name":"my-dowhile-2", "body": [
-                    "do_while_body_action_2"
-                ]
-            },
-            {"for":"день", "from":"1", "to":"5", "step":"+1", "name":"my-for-3", "body": [
-                    "for_body_action_3",
-                    {"foreach":"x", "in": "list", "name":"my-for-in-4", "body": [
-                    "foreach_body_action_4"]
-                    },
-                    {"sequence": [
-                        "seq_action_1",
-                        "seq_action_2"
-                        ],
-                        "name":"myseq-5"
-                    }
-                ]
-            }
-        ]
-    }
-]}
-"""
-test_str = """
-{
-"algorithm": [
-    "делай_раз",
-    "делай_два",
-    "делай_три"
-]}
-"""
-
-
 def boolean_line_usage_actual(boolean_line, visitor_obj):
     L = len(boolean_line)
     c = 1 + visitor_obj.last_cond_tuple[0]
@@ -2044,9 +1977,9 @@ def boolean_line_usage_report(boolean_line, visitor_obj):
 
 
 def act_line_for_alg_element(alg_element: dict, phase: str, expr_value=False, use_exec_time=0, lang=None) -> dict:
-    ''' Produce trace acts strings separately with minimum of config (no whole algorithm tree is required). We tried to maintain maximum flexibility.
+    """ Produce trace acts strings separately with minimum of config (no whole algorithm tree is required). We tried to maintain maximum flexibility.
     Not all algorithm structures are covered, but only the most frequently used ones.
-    '''
+    """
     if lang:
         set_target_lang(lang)
 
@@ -2066,7 +1999,8 @@ def act_line_for_alg_element(alg_element: dict, phase: str, expr_value=False, us
         node = NameOnlyStatementJN(elem_type, name=alg_element["name"])
     elif elem_type == "expr":
         node = GenericCondition(cond=None, name=alg_element["name"])
-    # в случае со сложными действиями создаётся акт целиком, со всеми вложенными действиями?..  phase указывает, еачало или конец нам нужно взять
+    # в случае со сложными действиями создаётся акт целиком, со всеми вложенными действиями?..
+    # phase указывает, начало или конец нам нужно взять
     if not node:  # elem_type in ("if", "else if"):
         tro = find_tro_for_act_type(elem_type)
         assert tro, "act_line_for_alg_element(): node type not found: alg_element['type'] == " + alg_element["type"]
@@ -2197,92 +2131,3 @@ def patch_trace(trace: str) -> str:
 
     return trace
 
-
-def get_text_trace(alg_root_node, boolean_line) -> (str, TraceTextVisitor):
-    tr_v = TraceTextVisitor(boolean_line)
-    alg_root_node.accept(tr_v)
-    trace = str(tr_v)
-
-    return patch_trace(trace), tr_v
-
-
-if __name__ == "__main__":
-
-    # exit()  # DEBUG
-
-    try:
-        import os
-        import os.path
-
-        input_alg_file = 'alg_in.json'
-        input_trace_specs_file = 'tr_in.txt'
-        speak_lang_file = 'speak.lang'
-
-        output_alg_traces_file = 'algtr_out.txt'
-        output_alg_json_file = 'alg_out.json'
-        output_trace_json_template = 'tr_out_{}.json'
-
-        if os.path.exists(speak_lang_file):
-            with open(speak_lang_file, encoding='utf-8') as f:
-                lang = f.read().strip().lower()
-                if lang in SUPPORTED_LANGS:
-                    set_target_lang(lang)
-                    print("Switched to language `%s`." % lang)
-                else:
-                    print("Warning: invalid content of language-target file `%s` (one of %s is expected). Defaulting "
-                          "to `%s`." % (speak_lang_file, str(SUPPORTED_LANGS), DEFAULT_LANG))
-
-
-        if os.path.exists(input_alg_file):
-            with open(input_alg_file, encoding='utf-8') as f:
-                json_data = f.read()
-        else:
-            print("Not found:", input_alg_file)
-            exit()
-
-        if os.path.exists(input_trace_specs_file):
-            with open(input_trace_specs_file) as f:
-                tr_boolean_lines = f.readlines()
-        else:
-            print("Not found:", input_trace_specs_file)
-            tr_boolean_lines = []
-
-        with open(output_alg_traces_file, "w", encoding='utf-8') as f:
-            r = GenericAlgorithmJsonNode.parse(json_data)
-            alg_v = AlgTextVisitor()
-            r.accept(alg_v)
-            f.write(str(alg_v))
-            print("Saved: ", "algorithm as text")
-
-            for boolean_line in tr_boolean_lines:
-                boolean_line = boolean_line.strip()
-                trace, tr_v = get_text_trace(r, boolean_line)
-
-                f.write("\n\n// " + boolean_line_usage_report(boolean_line,tr_v) + '\n' + trace)
-
-        alg = stringify(r.to_dict_4onto(), False)
-        with open(output_alg_json_file, "w", encoding='utf-8') as f:
-            f.write(alg)
-
-        print("Saved: ", "algorithm as json")
-
-        for boolean_line in tr_boolean_lines:
-            boolean_line = boolean_line.strip()
-            tr_v = TraceJsonVisitor(boolean_line)
-            r.accept(tr_v)
-            trace = stringify(tr_v.root.to_dict())
-
-            actual_fname = output_trace_json_template.format(boolean_line_usage_actual(boolean_line,tr_v))
-            with open(actual_fname, "w", encoding='utf-8') as f:
-                f.write(trace)
-
-            print("Saved: ", "trace as json", " file:", actual_fname)
-
-
-
-        print("Completed: ", len(tr_boolean_lines), 'trace(s)')
-
-    except Exception as e:
-        with open(output_alg_traces_file, "w", encoding='utf-8') as f:
-            f.write("An error (%s) occurred :\n\n" % (type(e).__name__) + str(e))
-            raise e

@@ -1,7 +1,7 @@
 import platform
 OS = platform.system()
 
-print("Running on '%s' platform." % OS)
+# print("Running on '%s' platform." % OS)
 
 if OS.lower() == 'windows':
 	# debug configuration (dev)
