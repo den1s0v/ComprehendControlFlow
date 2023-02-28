@@ -1,4 +1,4 @@
-cd ./jena-tcp-service
+cd ./code/jena-tcp-service
 
 # build JAR
 ./build.sh
